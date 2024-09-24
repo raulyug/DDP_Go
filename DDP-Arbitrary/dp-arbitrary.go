@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
 const numGarfos = 5
 
-func filosofo(id int, garcom chan int) {
+func filosofo(id int, garcom chan int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	for i := 0; i < 3; i++ {
 		fmt.Printf("Filósofo %d pediu permissao p/ pegar garfos\n", id)
 		garcom <- 1
@@ -27,13 +30,14 @@ func filosofo(id int, garcom chan int) {
 }
 
 func main() {
+	var wg sync.WaitGroup
 	const numPhilosophers = 5
 	garcom := make(chan int, numGarfos)
 
 	for i := 1; i <= numPhilosophers; i++ {
-		go filosofo(i, garcom)
+		wg.Add(1)
+		go filosofo(i, garcom, &wg)
 	}
 
-	// Evita que o programa principal finalize antes das goroutines
-	select {}
+	wg.Wait()
 }
